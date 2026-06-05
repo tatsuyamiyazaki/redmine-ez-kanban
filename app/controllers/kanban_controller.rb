@@ -11,5 +11,7 @@ class KanbanController < ApplicationController
 
   def show
     @columns = EzKanban::Board.new(@project).columns
+    # Ancestor paths for every card, resolved in one query (R2, no N+1).
+    @ancestry = EzKanban::Ancestry.for(@columns.flat_map(&:cards))
   end
 end

@@ -3,6 +3,25 @@
   No edit/drag affordances (R5); clicking through goes to Redmine's issue view.
 %>
 <div class="ez-kanban-card" data-issue-id="<%= issue.id %>">
+  <%#
+    Breadcrumb (R2): root -> nearest parent. Full path in title for hover;
+    overflow collapsing to "root … nearest" is handled in CSS by width. Cards
+    for standalone issues (empty path) show no breadcrumb (R2-5).
+  %>
+  <% path = ancestry[issue.id] %>
+  <% if path.present? %>
+    <nav class="ez-kanban-card__breadcrumb"
+         title="<%= path.map(&:subject).join(' / ') %>">
+      <% path.each_with_index do |ancestor, index| %>
+        <% if index.positive? %>
+          <span class="ez-kanban-card__crumb-sep">/</span>
+        <% end %>
+        <%= link_to ancestor.subject, issue_path(ancestor),
+                    class: 'ez-kanban-card__crumb' %>
+      <% end %>
+    </nav>
+  <% end %>
+
   <div class="ez-kanban-card__header">
     <span class="ez-kanban-card__tracker"><%= issue.tracker.name %></span>
     <%= link_to "##{issue.id}", issue_path(issue), class: 'ez-kanban-card__id' %>

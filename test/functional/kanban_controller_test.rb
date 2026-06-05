@@ -79,6 +79,43 @@ class KanbanControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_card_shows_breadcrumb_for_leaf_with_parent
+    Role.find(1).add_permission!(:view_ez_kanban)
+    root = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Root project area'
+    )
+    leaf = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Child leaf', parent_issue_id: root.id
+    )
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s do
+      assert_select '.ez-kanban-card__breadcrumb[title=?]', 'Root project area'
+      assert_select '.ez-kanban-card__breadcrumb', text: /Root project area/
+    end
+  end
+
+  def test_standalone_card_has_no_breadcrumb
+    Role.find(1).add_permission!(:view_ez_kanban)
+    leaf = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Lonely card'
+    )
+
+    get :show, params: { project_id: @project.id }
+
+    assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s do
+      assert_select '.ez-kanban-card__breadcrumb', count: 0
+    end
+  end
+
   private
 
   def enable_ez_kanban(project)

@@ -1,5 +1,9 @@
 <% html_title l(:label_ez_kanban) %>
 
+<% content_for :header_tags do %>
+  <%= stylesheet_link_tag 'ez_kanban', plugin: 'redmine_ez_kanban' %>
+<% end %>
+
 <h2><%= l(:label_ez_kanban) %></h2>
 
 <div class="ez-kanban-board">
@@ -11,7 +15,8 @@
       </header>
 
       <div class="ez-kanban-column__cards">
-        <%= render partial: 'card', collection: column.cards, as: :issue %>
+        <%= render partial: 'card', collection: column.cards, as: :issue,
+                   locals: { ancestry: @ancestry } %>
       </div>
     </section>
   <% end %>

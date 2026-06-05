@@ -1,0 +1,100 @@
+/*
+ * Redmine EZ Kanban board styles.
+ * Flat, read-only board: status columns laid out horizontally, leaf cards
+ * stacked inside. Breadcrumb collapsing (R2-3/R2-4) is width-driven here;
+ * the full ancestor path lives in each breadcrumb's title attribute.
+ */
+
+.ez-kanban-board {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.ez-kanban-column {
+  flex: 0 0 280px;
+  background: #f6f7f9;
+  border: 1px solid #e3e5e8;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.ez-kanban-column__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.ez-kanban-column__count {
+  background: #e3e5e8;
+  border-radius: 10px;
+  padding: 0 8px;
+  font-size: 0.8em;
+  font-weight: normal;
+}
+
+.ez-kanban-column__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ez-kanban-card {
+  background: #fff;
+  border: 1px solid #dcdee0;
+  border-radius: 5px;
+  padding: 8px;
+}
+
+.ez-kanban-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Breadcrumb (R2): single line; full path shown on hover via title. When too
+ * wide, the first (root) and last (nearest parent) crumbs are kept and the
+ * middle ones ellipsize, approximating "root … nearest". */
+.ez-kanban-card__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.75em;
+  color: #888;
+  margin-bottom: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ez-kanban-card__crumb {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ez-kanban-card__crumb:first-child,
+.ez-kanban-card__crumb:last-child {
+  flex: 0 1 auto;
+  max-width: 45%;
+}
+
+.ez-kanban-card__crumb:not(:first-child):not(:last-child) {
+  flex: 1 1 auto;
+  min-width: 1ch;
+}
+
+.ez-kanban-card__crumb-sep {
+  color: #bbb;
+}
+
+.ez-kanban-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.85em;
+}
