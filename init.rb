@@ -10,6 +10,11 @@ Redmine::Plugin.register :redmine_ez_kanban do
 
   requires_redmine version_or_higher: '6.0.0'
 
+  # Global column layout (ADR-0004), serialized into Setting. Empty 'columns'
+  # means "use the built-in default layout"; the admin editor (issue 0005)
+  # populates it later. No settings partial yet.
+  settings default: { 'columns' => [] }
+
   project_module :ez_kanban do
     # Read-only board: a single view permission is all the plugin needs.
     permission :view_ez_kanban, { kanban: [:show] }, read: true

@@ -3,5 +3,16 @@
 <h2><%= l(:label_ez_kanban) %></h2>
 
 <div class="ez-kanban-board">
-  <%= render partial: 'card', collection: @cards, as: :issue %>
+  <% @columns.each do |column| %>
+    <section class="ez-kanban-column" data-column-key="<%= column.key %>">
+      <header class="ez-kanban-column__header">
+        <span class="ez-kanban-column__title"><%= column.name %></span>
+        <span class="ez-kanban-column__count"><%= column.wip_count %></span>
+      </header>
+
+      <div class="ez-kanban-column__cards">
+        <%= render partial: 'card', collection: column.cards, as: :issue %>
+      </div>
+    </section>
+  <% end %>
 </div>

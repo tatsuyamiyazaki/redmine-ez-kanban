@@ -1,2 +1,4 @@
 ja:
   label_ez_kanban: カンバン
+  label_ez_kanban_column_done: 完了
+  label_ez_kanban_column_unclassified: 未分類

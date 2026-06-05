@@ -61,6 +61,24 @@ class KanbanControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_show_renders_status_columns_with_heading_count_and_card
+    Role.find(1).add_permission!(:view_ez_kanban)
+    leaf = Issue.create!(
+      project: @project, tracker: Tracker.find(2), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Columned card'
+    )
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select '.ez-kanban-column[data-column-key=?]', 'status_1' do
+      assert_select '.ez-kanban-column__title', text: /#{IssueStatus.find(1).name}/
+      assert_select '.ez-kanban-column__count'
+      assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s
+    end
+  end
+
   private
 
   def enable_ez_kanban(project)

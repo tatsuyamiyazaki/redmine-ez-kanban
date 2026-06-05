@@ -9,8 +9,14 @@ module EzKanban
   # the nested set, so a filtered-in parent is never a Card and a filtered-in
   # leaf whose parent is filtered out still is.
   class Board
+    # Sentinel so cards without a due date sort after those that have one.
+    FAR_FUTURE = Date.new(9999, 12, 31)
+
     def initialize(project, query: nil)
       @project = project
+      # A caller-supplied query carries its own sort (R9); the board's own
+      # default query has none, so the R9 fallback order applies instead.
+      @query_sorted = !query.nil?
       @query = query || default_query
     end
 
@@ -20,7 +26,26 @@ module EzKanban
       @query.issues.select(&:leaf?)
     end
 
+    # Cards grouped into the board's status columns (issue 0003).
+    def columns
+      layout = Layout.default
+      grouped = cards.group_by { |card| layout.column_key_for(card.status) }
+      layout.definitions.map do |definition|
+        Column.new(key: definition.key, name: definition.name,
+                   is_done: definition.is_done,
+                   cards: sort_within_column(grouped.fetch(definition.key, [])))
+      end
+    end
+
     private
+
+    # In-column order (R9): follow the query's sort when one was supplied;
+    # otherwise fall back to priority descending, then due date ascending.
+    def sort_within_column(cards)
+      return cards if @query_sorted
+
+      cards.sort_by { |card| [-card.priority.position, card.due_date || FAR_FUTURE] }
+    end
 
     # Default board query: no status restriction (open AND closed), overriding
     # Redmine's usual open-only default so the Done column can fill (ADR-0005).

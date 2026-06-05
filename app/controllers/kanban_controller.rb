@@ -10,6 +10,6 @@ class KanbanController < ApplicationController
   before_action :authorize
 
   def show
-    @cards = EzKanban::Board.new(@project).cards
+    @columns = EzKanban::Board.new(@project).columns
   end
 end

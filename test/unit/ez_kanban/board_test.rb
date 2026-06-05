@@ -97,7 +97,102 @@ module EzKanban
       refute_includes Board.new(@project).cards, was_leaf
     end
 
+    # --- #columns (issue 0003): cards grouped into status columns ---
+
+    # Tracer bullet: a leaf lands in the default column for its own status.
+    def test_card_lands_in_its_status_column
+      leaf = create_issue(subject: 'New leaf', status: IssueStatus.find(1))
+
+      columns = Board.new(@project).columns
+
+      col = columns.find { |c| c.cards.include?(leaf) }
+      assert_equal IssueStatus.find(1).name, col.name
+    end
+
+    # Default config: an is_closed status with no explicit mapping falls into
+    # the single trailing Done column (precedence step 2).
+    def test_closed_card_lands_in_done_column
+      closed = IssueStatus.where(is_closed: true).first
+      leaf = create_issue(subject: 'Done leaf', status: closed)
+
+      columns = Board.new(@project).columns
+
+      col = columns.find { |c| c.cards.include?(leaf) }
+      assert col, 'closed card was dropped from every column'
+      assert col.is_done?, 'closed card should land in the Done column'
+    end
+
+    # The admin-configured layout in Setting overrides the built-in default.
+    def test_uses_admin_configured_columns_from_setting
+      with_plugin_columns([
+                            { 'key' => 'backlog', 'name' => 'Backlog',
+                              'status_ids' => [1, 2] }
+                          ]) do
+        leaf = create_issue(subject: 'Backlog leaf', status: IssueStatus.find(2))
+
+        columns = Board.new(@project).columns
+
+        col = columns.find { |c| c.cards.include?(leaf) }
+        assert_equal 'Backlog', col.name
+      end
+    end
+
+    # Each column reports its exact card total (R10-1): with no render cap yet,
+    # that is simply the number of cards placed in it.
+    def test_column_wip_count_equals_its_card_total
+      base = column(Board.new(@project).columns, 'status_1').wip_count
+      2.times { |i| create_issue(subject: "wip#{i}", status: IssueStatus.find(1)) }
+
+      col = column(Board.new(@project).columns, 'status_1')
+
+      assert_equal col.cards.size, col.wip_count
+      assert_equal base + 2, col.wip_count
+    end
+
+    # R9 default order within a column: priority descending, then due ascending.
+    def test_default_in_column_sort_is_priority_desc_then_due_asc
+      high = IssuePriority.active.order(:position).last
+      low  = IssuePriority.active.order(:position).first
+      later  = create_issue(subject: 'A', status: IssueStatus.find(4),
+                            priority: high, due_date: Date.new(2026, 7, 10))
+      sooner = create_issue(subject: 'B', status: IssueStatus.find(4),
+                            priority: high, due_date: Date.new(2026, 7, 1))
+      low_pri = create_issue(subject: 'C', status: IssueStatus.find(4),
+                             priority: low, due_date: Date.new(2026, 1, 1))
+
+      col = column(Board.new(@project).columns, 'status_4')
+
+      ordered = col.cards.select { |i| [later, sooner, low_pri].include?(i) }
+      assert_equal [sooner, later, low_pri], ordered
+    end
+
+    # R9: an explicit query sort overrides the default in-column order.
+    def test_in_column_order_follows_query_sort
+      query = IssueQuery.new(name: '_', project: @project)
+      query.filters = {}
+      query.sort_criteria = [['subject', 'asc']]
+      zzz = create_issue(subject: 'ZZZ sort', status: IssueStatus.find(4))
+      aaa = create_issue(subject: 'AAA sort', status: IssueStatus.find(4))
+
+      col = column(Board.new(@project, query: query).columns, 'status_4')
+
+      ordered = col.cards.select { |i| [zzz, aaa].include?(i) }
+      assert_equal [aaa, zzz], ordered
+    end
+
     private
+
+    def column(columns, key)
+      columns.find { |c| c.key == key }
+    end
+
+    def with_plugin_columns(columns)
+      previous = Setting.plugin_redmine_ez_kanban
+      Setting.plugin_redmine_ez_kanban = { 'columns' => columns }
+      yield
+    ensure
+      Setting.plugin_redmine_ez_kanban = previous
+    end
 
     def query_with_subject(text)
       query = IssueQuery.new(name: '_', project: @project)

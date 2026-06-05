@@ -1,2 +1,4 @@
 en:
   label_ez_kanban: Kanban
+  label_ez_kanban_column_done: Done
+  label_ez_kanban_column_unclassified: Unclassified
