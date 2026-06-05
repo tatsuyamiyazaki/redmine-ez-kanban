@@ -9,5 +9,7 @@ class KanbanController < ApplicationController
   before_action :find_project_by_project_id
   before_action :authorize
 
-  def show; end
+  def show
+    @cards = EzKanban::Board.new(@project).cards
+  end
 end

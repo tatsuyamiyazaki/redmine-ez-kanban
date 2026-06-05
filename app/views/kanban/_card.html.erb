@@ -1,0 +1,28 @@
+<%#
+  A single read-only Card for a leaf issue (issue 0002).
+  No edit/drag affordances (R5); clicking through goes to Redmine's issue view.
+%>
+<div class="ez-kanban-card" data-issue-id="<%= issue.id %>">
+  <div class="ez-kanban-card__header">
+    <span class="ez-kanban-card__tracker"><%= issue.tracker.name %></span>
+    <%= link_to "##{issue.id}", issue_path(issue), class: 'ez-kanban-card__id' %>
+  </div>
+
+  <div class="ez-kanban-card__subject">
+    <%= link_to issue.subject, issue_path(issue) %>
+  </div>
+
+  <div class="ez-kanban-card__meta">
+    <span class="ez-kanban-card__priority"><%= issue.priority.name %></span>
+
+    <% if issue.due_date %>
+      <span class="ez-kanban-card__due"><%= format_date(issue.due_date) %></span>
+    <% end %>
+
+    <% if issue.assigned_to %>
+      <span class="ez-kanban-card__assignee">
+        <%= avatar(issue.assigned_to, size: '16') %><%= issue.assigned_to.name %>
+      </span>
+    <% end %>
+  </div>
+</div>

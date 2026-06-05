@@ -1,3 +1,7 @@
 <% html_title l(:label_ez_kanban) %>
 
 <h2><%= l(:label_ez_kanban) %></h2>
+
+<div class="ez-kanban-board">
+  <%= render partial: 'card', collection: @cards, as: :issue %>
+</div>

@@ -40,6 +40,27 @@ class KanbanControllerTest < Redmine::ControllerTest
     assert_response :forbidden
   end
 
+  def test_show_renders_a_card_for_each_leaf_with_fields
+    Role.find(1).add_permission!(:view_ez_kanban)
+    leaf = Issue.create!(
+      project: @project, tracker: Tracker.find(2), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Card under test', assigned_to: User.find(2),
+      due_date: Date.new(2026, 7, 1)
+    )
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s do
+      assert_select '.ez-kanban-card__subject', text: /Card under test/
+      assert_select '.ez-kanban-card__tracker', text: leaf.tracker.name
+      assert_select '.ez-kanban-card__priority', text: leaf.priority.name
+      assert_select '.ez-kanban-card__due'
+      assert_select '.ez-kanban-card__assignee'
+    end
+  end
+
   private
 
   def enable_ez_kanban(project)
