@@ -6,6 +6,8 @@
 
 <h2><%= l(:label_ez_kanban) %></h2>
 
+<%= render partial: 'filters' %>
+
 <div class="ez-kanban-board">
   <% @columns.each do |column| %>
     <% over_wip = @highlight_wip && column.over_wip? %>

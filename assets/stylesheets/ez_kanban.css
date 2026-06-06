@@ -5,6 +5,24 @@
  * the full ancestor path lives in each breadcrumb's title attribute.
  */
 
+/* Filter UI (issue 0006, R7): a compact bar above the board. The saved-query
+ * selector sits inline; the standard Redmine filters sit in a collapsible
+ * fieldset that stays collapsed by default (R7-5). */
+.ez-kanban-filters {
+  margin-bottom: 12px;
+}
+
+.ez-kanban-filters__query {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.ez-kanban-filters__query label {
+  font-weight: bold;
+}
+
 .ez-kanban-board {
   display: flex;
   gap: 12px;

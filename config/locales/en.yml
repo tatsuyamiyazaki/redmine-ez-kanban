@@ -3,6 +3,9 @@ en:
   label_ez_kanban_column_done: Done
   label_ez_kanban_column_unclassified: Unclassified
   label_ez_kanban_wip_over: Over the WIP threshold
+  # Filter UI / saved queries (issue 0006)
+  label_ez_kanban_saved_query: Saved query
+  label_ez_kanban_no_query: "(No query – all issues)"
   # Admin column config UI (issue 0005)
   label_ez_kanban_columns: Columns
   label_ez_kanban_column_name: Column name

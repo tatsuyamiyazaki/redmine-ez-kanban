@@ -3,6 +3,9 @@ ja:
   label_ez_kanban_column_done: 完了
   label_ez_kanban_column_unclassified: 未分類
   label_ez_kanban_wip_over: WIPしきい値を超過しています
+  # フィルタUI・保存クエリ（issue 0006）
+  label_ez_kanban_saved_query: 保存したクエリ
+  label_ez_kanban_no_query: （クエリなし・全件）
   # 列設定の管理UI（issue 0005）
   label_ez_kanban_columns: 列構成
   label_ez_kanban_column_name: 列名

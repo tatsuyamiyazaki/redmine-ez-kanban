@@ -1,0 +1,40 @@
+<%# Filter UI for the board (issue 0006, R7).
+    A GET form so filter/query state lives in the URL and is restored on
+    reload/share. The filters fieldset is collapsed by default (R7-5); a
+    saved-query selector (R7-2) navigates the board to a stored query. %>
+<% saved_queries = IssueQuery.visible.where(project_id: [nil, @project.id]).sorted.to_a %>
+
+<%= form_tag(project_ez_kanban_path(@project), method: :get,
+             id: 'ez-kanban-query-form', class: 'ez-kanban-filters') do %>
+  <%= hidden_field_tag 'set_filter', '1' %>
+
+  <div class="ez-kanban-filters__query">
+    <label for="ez-kanban-query-id"><%= l(:label_ez_kanban_saved_query) %></label>
+    <%= select_tag 'query_id',
+          options_for_select(
+            [[l(:label_ez_kanban_no_query), '']] +
+              saved_queries.map { |q| [q.name, q.id] },
+            @query.persisted? ? @query.id : ''),
+          id: 'ez-kanban-query-id',
+          onchange: "window.location='#{project_ez_kanban_path(@project)}'" \
+                    "+(this.value ? '?query_id='+encodeURIComponent(this.value) : '');" %>
+  </div>
+
+  <fieldset id="filters" class="collapsible collapsed">
+    <legend onclick="toggleFieldset(this);" class="icon icon-collapsed">
+      <%= sprite_icon('angle-right', rtl: true) %>
+      <%= l(:label_filter_plural) %>
+    </legend>
+    <div style="display: none;">
+      <%= render partial: 'queries/filters', locals: { query: @query } %>
+    </div>
+  </fieldset>
+
+  <p class="buttons">
+    <%= link_to_function sprite_icon('checked', l(:button_apply)),
+                         '$("#ez-kanban-query-form").submit()',
+                         class: 'icon icon-checked' %>
+    <%= link_to sprite_icon('reload', l(:button_clear)),
+                project_ez_kanban_path(@project), class: 'icon icon-reload' %>
+  </p>
+<% end %>

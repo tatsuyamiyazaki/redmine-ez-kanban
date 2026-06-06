@@ -159,6 +159,138 @@ class KanbanControllerTest < Redmine::ControllerTest
     assert_select '.ez-kanban-column--over-wip', count: 0
   end
 
+  # R7: an ad-hoc filter (set_filter + f/op/v) restricts the board's cards to
+  # those matching the IssueQuery. Filtering to status 1 drops the closed card.
+  def test_filter_restricts_cards_to_matching_status
+    Role.find(1).add_permission!(:view_ez_kanban)
+    keep = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Filter keep'
+    )
+    drop = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(5), priority: IssuePriority.first,
+      subject: 'Filter drop'
+    )
+
+    get :show, params: {
+      project_id: @project.id, set_filter: '1',
+      f: ['status_id'], op: { 'status_id' => '=' }, v: { 'status_id' => ['1'] }
+    }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", keep.id.to_s
+    assert_select ".ez-kanban-card[data-issue-id=?]", drop.id.to_s, count: 0
+  end
+
+  # R7-2: choosing a saved query renders the board under that query's
+  # conditions. The public query restricts to status 1, so the closed card drops.
+  def test_saved_query_drives_the_board
+    Role.find(1).add_permission!(:view_ez_kanban)
+    query = IssueQuery.create!(
+      name: 'Only new', project: @project, user: User.find(2),
+      visibility: Query::VISIBILITY_PUBLIC,
+      filters: { 'status_id' => { operator: '=', values: ['1'] } }
+    )
+    keep = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first, subject: 'Keep'
+    )
+    drop = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(5), priority: IssuePriority.first, subject: 'Drop'
+    )
+
+    get :show, params: { project_id: @project.id, query_id: query.id }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", keep.id.to_s
+    assert_select ".ez-kanban-card[data-issue-id=?]", drop.id.to_s, count: 0
+  end
+
+  # R7-3: custom-field conditions work because filtering rides on IssueQuery.
+  def test_custom_field_filter_narrows_cards
+    Role.find(1).add_permission!(:view_ez_kanban)
+    field = IssueCustomField.create!(
+      name: 'Team', field_format: 'string', is_filter: true,
+      is_for_all: true, trackers: Tracker.all
+    )
+    keep = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Alpha', custom_field_values: { field.id => 'alpha' }
+    )
+    drop = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Beta', custom_field_values: { field.id => 'beta' }
+    )
+
+    get :show, params: {
+      project_id: @project.id, set_filter: '1',
+      f: ["cf_#{field.id}"], op: { "cf_#{field.id}" => '=' },
+      v: { "cf_#{field.id}" => ['alpha'] }
+    }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", keep.id.to_s
+    assert_select ".ez-kanban-card[data-issue-id=?]", drop.id.to_s, count: 0
+  end
+
+  # ADR-0005: with no query selected the board stays status-unrestricted, so a
+  # closed-status leaf still appears (Redmine's open-only default is overridden).
+  def test_default_view_shows_closed_status_cards
+    Role.find(1).add_permission!(:view_ez_kanban)
+    closed = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(5), priority: IssuePriority.first,
+      subject: 'Closed leaf'
+    )
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", closed.id.to_s
+  end
+
+  # R7-5: the board carries a GET filter form whose filters fieldset is
+  # collapsed by default, plus a saved-query selector (R7-2).
+  def test_filter_ui_is_present_and_collapsed_by_default
+    Role.find(1).add_permission!(:view_ez_kanban)
+    IssueQuery.create!(
+      name: 'Saved one', project: @project, user: User.find(2),
+      visibility: Query::VISIBILITY_PUBLIC,
+      filters: { 'status_id' => { operator: '=', values: ['1'] } }
+    )
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select 'form#ez-kanban-query-form[method=?]', 'get'
+    assert_select 'fieldset#filters.collapsible.collapsed'
+    assert_select 'select#ez-kanban-query-id' do
+      assert_select 'option', text: /Saved one/
+    end
+  end
+
+  # The selected query round-trips through the URL: a shared/reloaded
+  # ?query_id=… link shows that query as the active selection.
+  def test_selected_query_is_reflected_in_selector
+    Role.find(1).add_permission!(:view_ez_kanban)
+    query = IssueQuery.create!(
+      name: 'Pinned', project: @project, user: User.find(2),
+      visibility: Query::VISIBILITY_PUBLIC,
+      filters: { 'status_id' => { operator: '*', values: [''] } }
+    )
+
+    get :show, params: { project_id: @project.id, query_id: query.id }
+
+    assert_response :success
+    assert_select 'select#ez-kanban-query-id option[selected][value=?]',
+                  query.id.to_s, text: /Pinned/
+  end
+
   private
 
   def enable_ez_kanban(project)

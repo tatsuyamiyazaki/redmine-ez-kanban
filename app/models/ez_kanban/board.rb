@@ -12,10 +12,16 @@ module EzKanban
     # Sentinel so cards without a due date sort after those that have one.
     FAR_FUTURE = Date.new(9999, 12, 31)
 
+    # The effective query driving the board, exposed so the filter UI (issue
+    # 0006) can render the current filters and selected saved query.
+    attr_reader :query
+
     def initialize(project, query: nil)
       @project = project
       # A caller-supplied query carries its own sort (R9); the board's own
-      # default query has none, so the R9 fallback order applies instead.
+      # default query is treated as unsorted so the R9 fallback order applies.
+      # (The default query still has IssueQuery's built-in sort, which is not
+      # the board's intended in-column order, so we must not follow it.)
       @query_sorted = !query.nil?
       @query = query || default_query
     end
