@@ -93,22 +93,27 @@
 }
 
 /* Priority colour stripe (issue 0010). The card root carries a
- * priority-<position_name> class (lowest/low/high/highest) emitted by the view;
- * `default` gets no class and so no stripe. The class semantics are Redmine's
- * (IssuePriority#position_name); only the stripe colours live here, since
- * Redmine's own priority palette targets issue-list table cells, not cards.
- * A cool→warm ramp keeps high-priority cards scannable without alarming the
- * read-only board. Purely informational: never affects placement (R10). */
-.ez-kanban-card.priority-lowest {
-  border-left: 4px solid #9aa7b5;
-}
-
-.ez-kanban-card.priority-low {
+ * priority-<position_name> class emitted by the view; `default` gets no class
+ * and so no stripe. The class semantics are Redmine's (IssuePriority#
+ * position_name), whose middle buckets are numbered: lowest, low2/low3…,
+ * default, …high3/high2, highest. We therefore colour by FAMILY via a class
+ * substring (matching every low*/high* level), with the extremes (lowest/
+ * highest) overriding to a stronger tone. Only the stripe colours live here,
+ * since Redmine's own priority palette targets issue-list table cells, not
+ * cards. Purely informational: never affects placement (R10). */
+.ez-kanban-card[class*="priority-low"] {
   border-left: 4px solid #4a90d9;
 }
 
-.ez-kanban-card.priority-high {
+.ez-kanban-card[class*="priority-high"] {
   border-left: 4px solid #f0883e;
+}
+
+/* Extremes get a self-contained shorthand (width AND colour), not just a colour
+ * override: lowest/highest must not depend on the family rule above to supply
+ * the 4px width, or a dropped family rule leaves them at the base 1px border. */
+.ez-kanban-card.priority-lowest {
+  border-left: 4px solid #9aa7b5;
 }
 
 .ez-kanban-card.priority-highest {
