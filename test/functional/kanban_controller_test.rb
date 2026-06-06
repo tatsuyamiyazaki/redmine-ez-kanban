@@ -116,6 +116,49 @@ class KanbanControllerTest < Redmine::ControllerTest
     end
   end
 
+  # WIP highlight is opt-in (R10-3): with the global toggle on, a column whose
+  # count exceeds its threshold gets a highlight class. Threshold 0 + one card
+  # is the smallest over-capacity case.
+  def test_over_wip_column_is_highlighted_when_toggle_on
+    Role.find(1).add_permission!(:view_ez_kanban)
+    Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Over-cap card'
+    )
+
+    with_plugin_settings(
+      'columns' => [{ 'key' => 'todo', 'name' => 'To Do',
+                      'status_ids' => ['1'], 'wip_limit' => '0' }],
+      'highlight_wip' => '1'
+    ) do
+      get :show, params: { project_id: @project.id }
+    end
+
+    assert_select '.ez-kanban-column[data-column-key=?].ez-kanban-column--over-wip',
+                  'todo'
+  end
+
+  # R10-3: highlighting is off by default, so even an over-capacity column
+  # carries no highlight class.
+  def test_over_wip_column_not_highlighted_by_default
+    Role.find(1).add_permission!(:view_ez_kanban)
+    Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Over-cap card'
+    )
+
+    with_plugin_settings(
+      'columns' => [{ 'key' => 'todo', 'name' => 'To Do',
+                      'status_ids' => ['1'], 'wip_limit' => '0' }]
+    ) do
+      get :show, params: { project_id: @project.id }
+    end
+
+    assert_select '.ez-kanban-column--over-wip', count: 0
+  end
+
   private
 
   def enable_ez_kanban(project)

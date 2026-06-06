@@ -12,8 +12,10 @@ Redmine::Plugin.register :redmine_ez_kanban do
 
   # Global column layout (ADR-0004), serialized into Setting. Empty 'columns'
   # means "use the built-in default layout"; the admin editor (issue 0005)
-  # populates it later. No settings partial yet.
-  settings default: { 'columns' => [] }
+  # populates it. 'highlight_wip' is the opt-in WIP threshold highlight, off by
+  # default (R10-3).
+  settings default: { 'columns' => [], 'highlight_wip' => false },
+           partial: 'settings/ez_kanban_settings'
 
   project_module :ez_kanban do
     # Read-only board: a single view permission is all the plugin needs.

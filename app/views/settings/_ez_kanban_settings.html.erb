@@ -1,0 +1,66 @@
+<%#
+  Admin column editor for EZ Kanban (issue 0005). Edits the global, Setting-
+  serialized column layout (ADR-0004): add/remove/rename/reorder columns, map
+  statuses, pick the single Done column, and set per-column WIP thresholds. The
+  implicit "Unclassified" column is never shown here. Posts plain settings[...]
+  fields; the config is normalized on read (EzKanban::ColumnConfig), so a messy
+  submission degrades safely to the placement fallback rather than breaking.
+%>
+<% specs = settings['columns'].present? ? EzKanban::ColumnConfig.normalize(settings['columns']) : nil %>
+<% layout = EzKanban::Layout.new(columns: specs) %>
+<% rows = layout.editable_definitions %>
+<% statuses = IssueStatus.all.sorted.to_a %>
+<% warnings = settings['columns'].present? ? EzKanban::ColumnConfig.validate(settings['columns']) : [] %>
+
+<% if warnings.any? %>
+  <div class="flash warning" id="ez-kanban-config-warnings">
+    <ul>
+      <% warnings.each do |key| %><li><%= l(key) %></li><% end %>
+    </ul>
+  </div>
+<% end %>
+
+<p class="ez-kanban-settings-note"><em><%= l(:text_ez_kanban_columns_note) %></em></p>
+
+<table class="ez-kanban-settings-columns list">
+  <thead>
+    <tr>
+      <th><%= l(:label_ez_kanban_column_name) %></th>
+      <th><%= l(:label_ez_kanban_column_statuses) %></th>
+      <th><%= l(:label_ez_kanban_column_is_done) %></th>
+      <th><%= l(:label_ez_kanban_column_wip_limit) %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody id="ez-kanban-settings-rows">
+    <% rows.each_with_index do |row, index| %>
+      <%= render partial: 'settings/ez_kanban_column_row',
+                 locals: { index: index, row: row, statuses: statuses } %>
+    <% end %>
+  </tbody>
+</table>
+
+<p>
+  <button type="button" class="ez-kanban-add-column"><%= l(:label_ez_kanban_add_column) %></button>
+</p>
+
+<p class="ez-kanban-settings-note"><em><%= l(:text_ez_kanban_unclassified_note) %></em></p>
+
+<p>
+  <label>
+    <%# Hidden field so unchecking posts a value; checkbox overrides when set. %>
+    <%= hidden_field_tag 'settings[highlight_wip]', '0', id: nil %>
+    <%= check_box_tag 'settings[highlight_wip]', '1',
+                      EzKanban::ColumnConfig.truthy?(settings['highlight_wip']) %>
+    <%= l(:label_ez_kanban_highlight_wip) %>
+  </label>
+</p>
+
+<%# Template row for the "Add column" button to clone (index __INDEX__). %>
+<script type="text/html" id="ez-kanban-row-template">
+  <%= escape_javascript(render(partial: 'settings/ez_kanban_column_row',
+                               locals: { index: '__INDEX__', row: nil,
+                                         statuses: statuses })).html_safe %>
+</script>
+
+<%= javascript_include_tag 'ez_kanban_settings', plugin: 'redmine_ez_kanban' %>

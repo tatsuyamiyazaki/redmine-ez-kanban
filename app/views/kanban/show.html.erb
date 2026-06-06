@@ -8,10 +8,12 @@
 
 <div class="ez-kanban-board">
   <% @columns.each do |column| %>
-    <section class="ez-kanban-column" data-column-key="<%= column.key %>">
+    <% over_wip = @highlight_wip && column.over_wip? %>
+    <section class="ez-kanban-column<%= ' ez-kanban-column--over-wip' if over_wip %>"
+             data-column-key="<%= column.key %>">
       <header class="ez-kanban-column__header">
         <span class="ez-kanban-column__title"><%= column.name %></span>
-        <span class="ez-kanban-column__count"><%= column.wip_count %></span>
+        <span class="ez-kanban-column__count"<%= ' title=' + l(:label_ez_kanban_wip_over).inspect if over_wip %>><%= column.wip_count %><% if column.wip_limit %> / <%= column.wip_limit %><% end %></span>
       </header>
 
       <div class="ez-kanban-column__cards">

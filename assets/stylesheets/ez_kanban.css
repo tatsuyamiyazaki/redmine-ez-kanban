@@ -37,6 +37,19 @@
   font-weight: normal;
 }
 
+/* WIP threshold highlight (R10-2). Opt-in and purely informational: it never
+ * changes which cards appear or where (R10-4). */
+.ez-kanban-column--over-wip {
+  border-color: #d9534f;
+  box-shadow: 0 0 0 1px #d9534f inset;
+}
+
+.ez-kanban-column--over-wip .ez-kanban-column__count {
+  background: #d9534f;
+  color: #fff;
+  font-weight: bold;
+}
+
 .ez-kanban-column__cards {
   display: flex;
   flex-direction: column;

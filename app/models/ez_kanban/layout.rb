@@ -13,7 +13,8 @@ module EzKanban
   # status in position order, then a single Done column. The Unclassified
   # column is always appended so every card has a home (Req 6-4).
   class Layout
-    Definition = Struct.new(:key, :name, :status_ids, :is_done, keyword_init: true)
+    Definition = Struct.new(:key, :name, :status_ids, :is_done, :wip_limit,
+                            keyword_init: true)
 
     DONE_KEY = 'done'
     UNCLASSIFIED_KEY = 'unclassified'
@@ -22,7 +23,9 @@ module EzKanban
     # built-in default when none are configured (ADR-0004).
     def self.default
       configured = Setting.plugin_redmine_ez_kanban['columns']
-      configured.present? ? new(columns: configured) : new
+      # Normalize on read (ADR-0004): sanitize stored config so bad/legacy data
+      # degrades safely to the placement fallback rather than breaking the board.
+      configured.present? ? new(columns: ColumnConfig.normalize(configured)) : new
     end
 
     # @param columns [Array<Hash>, nil] explicit column specs; nil uses the
@@ -34,6 +37,13 @@ module EzKanban
     # Ordered column definitions, left to right, ending with Unclassified.
     def definitions
       @specs.map { |spec| Definition.new(**spec) } + [unclassified_definition]
+    end
+
+    # The admin-editable column definitions: every defined column, excluding the
+    # implicit Unclassified column (ADR-0004, not editable). Seeds the editor
+    # (issue 0005) from either the stored config or the built-in default.
+    def editable_definitions
+      @specs.map { |spec| Definition.new(**spec) }
     end
 
     # The column key a status maps to under this layout (precedence above).
@@ -58,17 +68,18 @@ module EzKanban
         key: spec[:key] || spec['key'],
         name: spec[:name] || spec['name'],
         status_ids: Array(spec[:status_ids] || spec['status_ids']).map(&:to_i),
-        is_done: spec[:is_done] || spec['is_done'] || false
+        is_done: spec[:is_done] || spec['is_done'] || false,
+        wip_limit: spec[:wip_limit] || spec['wip_limit']
       }
     end
 
     def built_in_columns
       open_columns = IssueStatus.where(is_closed: false).order(:position).map do |status|
         { key: "status_#{status.id}", name: status.name,
-          status_ids: [status.id], is_done: false }
+          status_ids: [status.id], is_done: false, wip_limit: nil }
       end
       open_columns + [{ key: DONE_KEY, name: I18n.t(:label_ez_kanban_column_done),
-                        status_ids: [], is_done: true }]
+                        status_ids: [], is_done: true, wip_limit: nil }]
     end
 
     def unclassified_definition

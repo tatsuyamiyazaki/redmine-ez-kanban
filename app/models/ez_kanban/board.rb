@@ -26,13 +26,19 @@ module EzKanban
       @query.issues.select(&:leaf?)
     end
 
+    # Whether WIP threshold highlighting is enabled (R10-3, opt-in). A global
+    # setting shared across all projects (R6-5); off by default.
+    def highlight_wip?
+      ColumnConfig.truthy?(Setting.plugin_redmine_ez_kanban['highlight_wip'])
+    end
+
     # Cards grouped into the board's status columns (issue 0003).
     def columns
       layout = Layout.default
       grouped = cards.group_by { |card| layout.column_key_for(card.status) }
       layout.definitions.map do |definition|
         Column.new(key: definition.key, name: definition.name,
-                   is_done: definition.is_done,
+                   is_done: definition.is_done, wip_limit: definition.wip_limit,
                    cards: sort_within_column(grouped.fetch(definition.key, [])))
       end
     end

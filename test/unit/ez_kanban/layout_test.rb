@@ -60,5 +60,16 @@ module EzKanban
 
       assert_equal Layout::UNCLASSIFIED_KEY, layout.definitions.last.key
     end
+
+    # A configured WIP threshold rides along on the column definition so the
+    # board can flag over-capacity columns (R10-2, issue 0005).
+    def test_definition_carries_wip_limit
+      layout = Layout.new(columns: [
+                            { key: 'wip', name: 'WIP', status_ids: [1],
+                              wip_limit: 3 }
+                          ])
+
+      assert_equal 3, layout.definitions.first.wip_limit
+    end
   end
 end

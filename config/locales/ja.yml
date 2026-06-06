@@ -2,3 +2,19 @@ ja:
   label_ez_kanban: カンバン
   label_ez_kanban_column_done: 完了
   label_ez_kanban_column_unclassified: 未分類
+  label_ez_kanban_wip_over: WIPしきい値を超過しています
+  # 列設定の管理UI（issue 0005）
+  label_ez_kanban_columns: 列構成
+  label_ez_kanban_column_name: 列名
+  label_ez_kanban_column_statuses: ステータス
+  label_ez_kanban_column_is_done: 完了列
+  label_ez_kanban_column_wip_limit: WIPしきい値
+  label_ez_kanban_add_column: 列を追加
+  label_ez_kanban_remove_column: 削除
+  label_ez_kanban_move_up: 上へ
+  label_ez_kanban_move_down: 下へ
+  label_ez_kanban_highlight_wip: WIPしきい値の超過を視覚的に強調する
+  text_ez_kanban_unclassified_note: 「未分類」列は常に末尾に自動表示され、編集できません。
+  text_ez_kanban_columns_note: 列は左から右の順に表示されます。空欄の列名の行は保存されません。
+  error_ez_kanban_multiple_is_done: 完了列は1つだけ指定できます。先頭の指定のみ有効になります。
+  error_ez_kanban_nameless_column: 列名が空のままステータスやしきい値が入力された行があります。その行は無視されました。

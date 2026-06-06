@@ -1,0 +1,43 @@
+<%#
+  One editable column row for the EZ Kanban admin editor (issue 0005).
+  Locals: index (row index or '__INDEX__' for the JS template), row (a
+  Layout::Definition or nil for a fresh row), statuses (sorted IssueStatus).
+  The is_done control is a radio in one shared group so only one column can be
+  Done; a sibling hidden field carries the actual per-row settings value, kept
+  in sync by ez_kanban_settings.js.
+%>
+<tr class="ez-kanban-settings-row">
+  <td>
+    <%= hidden_field_tag "settings[columns][#{index}][key]",
+                         (row && row.key.presence) || "col_#{index}",
+                         id: nil, class: 'ez-kanban-settings-key' %>
+    <%= text_field_tag "settings[columns][#{index}][name]", row&.name,
+                       id: nil, class: 'ez-kanban-settings-name' %>
+  </td>
+  <td class="ez-kanban-settings-statuses">
+    <% statuses.each do |status| %>
+      <label class="ez-kanban-settings-status-option">
+        <%= check_box_tag "settings[columns][#{index}][status_ids][]", status.id,
+                          row && row.status_ids.include?(status.id),
+                          id: nil, class: 'ez-kanban-settings-status' %>
+        <%= status.name %>
+      </label>
+    <% end %>
+  </td>
+  <td class="ez-kanban-settings-done-cell">
+    <%= hidden_field_tag "settings[columns][#{index}][is_done]",
+                         row&.is_done ? '1' : '0',
+                         id: nil, class: 'ez-kanban-settings-done-value' %>
+    <%= radio_button_tag 'ez_kanban_done', index, row&.is_done,
+                         id: nil, class: 'ez-kanban-settings-done' %>
+  </td>
+  <td>
+    <%= number_field_tag "settings[columns][#{index}][wip_limit]", row&.wip_limit,
+                         min: 0, id: nil, class: 'ez-kanban-settings-wip' %>
+  </td>
+  <td class="ez-kanban-settings-actions">
+    <button type="button" class="ez-kanban-move-up" title="<%= l(:label_ez_kanban_move_up) %>">▲</button>
+    <button type="button" class="ez-kanban-move-down" title="<%= l(:label_ez_kanban_move_down) %>">▼</button>
+    <button type="button" class="ez-kanban-remove-column"><%= l(:label_ez_kanban_remove_column) %></button>
+  </td>
+</tr>

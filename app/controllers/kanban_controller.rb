@@ -10,7 +10,10 @@ class KanbanController < ApplicationController
   before_action :authorize
 
   def show
-    @columns = EzKanban::Board.new(@project).columns
+    board = EzKanban::Board.new(@project)
+    @columns = board.columns
+    # WIP threshold highlight is opt-in and global (R10-3); off by default.
+    @highlight_wip = board.highlight_wip?
     # Ancestor paths for every card, resolved in one query (R2, no N+1).
     @ancestry = EzKanban::Ancestry.for(@columns.flat_map(&:cards))
   end

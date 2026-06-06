@@ -2,3 +2,19 @@ en:
   label_ez_kanban: Kanban
   label_ez_kanban_column_done: Done
   label_ez_kanban_column_unclassified: Unclassified
+  label_ez_kanban_wip_over: Over the WIP threshold
+  # Admin column config UI (issue 0005)
+  label_ez_kanban_columns: Columns
+  label_ez_kanban_column_name: Column name
+  label_ez_kanban_column_statuses: Statuses
+  label_ez_kanban_column_is_done: Done column
+  label_ez_kanban_column_wip_limit: WIP threshold
+  label_ez_kanban_add_column: Add column
+  label_ez_kanban_remove_column: Remove
+  label_ez_kanban_move_up: Up
+  label_ez_kanban_move_down: Down
+  label_ez_kanban_highlight_wip: Highlight columns that exceed their WIP threshold
+  text_ez_kanban_unclassified_note: The "Unclassified" column is always shown last and cannot be edited.
+  text_ez_kanban_columns_note: Columns are shown left to right. Rows with a blank column name are not saved.
+  error_ez_kanban_multiple_is_done: Only one Done column can be set; only the first is used.
+  error_ez_kanban_nameless_column: A row had statuses or a threshold but no name and was ignored.
