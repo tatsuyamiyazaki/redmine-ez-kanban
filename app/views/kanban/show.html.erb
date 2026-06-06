@@ -8,6 +8,12 @@
 
 <%= render partial: 'filters' %>
 
+<% if @over_cap %>
+  <div class="flash warning ez-kanban-over-cap">
+    <%= l(:text_ez_kanban_over_cap, count: @render_cap) %>
+  </div>
+<% end %>
+
 <div class="ez-kanban-board">
   <% @columns.each do |column| %>
     <% over_wip = @highlight_wip && column.over_wip? %>

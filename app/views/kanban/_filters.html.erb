@@ -4,6 +4,20 @@
     saved-query selector (R7-2) navigates the board to a stored query. %>
 <% saved_queries = IssueQuery.visible.where(project_id: [nil, @project.id]).sorted.to_a %>
 
+<%# Subproject range toggle (R-0007, scope A): off by default. It navigates to
+    the same board with only `subprojects` flipped, so the active query/filter
+    state in the URL is preserved (and the default board stays status-
+    unrestricted, ADR-0005) while the toggle state itself rides in the URL. %>
+<% flipped = request.query_parameters.merge('subprojects' => (@include_subprojects ? '0' : '1')) %>
+<div class="ez-kanban-filters__subprojects">
+  <label>
+    <%= check_box_tag 'subprojects', '1', @include_subprojects,
+                      id: 'ez-kanban-subprojects',
+                      onchange: "window.location='#{j project_ez_kanban_path(@project, flipped)}';" %>
+    <%= l(:label_ez_kanban_include_subprojects) %>
+  </label>
+</div>
+
 <%= form_tag(project_ez_kanban_path(@project), method: :get,
              id: 'ez-kanban-query-form', class: 'ez-kanban-filters') do %>
   <%= hidden_field_tag 'set_filter', '1' %>

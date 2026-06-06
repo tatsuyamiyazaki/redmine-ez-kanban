@@ -23,6 +23,17 @@
   font-weight: bold;
 }
 
+/* Subproject range toggle (issue 0007): a compact line under the selector. */
+.ez-kanban-filters__subprojects {
+  margin-bottom: 6px;
+  font-size: 0.95em;
+}
+
+/* Over-capacity banner (issue 0007): rendering was truncated at the cap. */
+.ez-kanban-over-cap {
+  margin-bottom: 12px;
+}
+
 .ez-kanban-board {
   display: flex;
   gap: 12px;

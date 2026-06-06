@@ -180,7 +180,50 @@ module EzKanban
       assert_equal [aaa, zzz], ordered
     end
 
+    # --- render cap (issue 0007): cap the rendered cards, keep true counts ---
+
+    # Tracer: a low global cap truncates the rendered cards, but each column
+    # still reports its true total (so WIP/over-WIP detection stays correct).
+    def test_render_cap_truncates_rendered_cards_keeping_true_counts
+      with_plugin_columns_and_cap(cap: 2) do
+        5.times { |i| create_issue(subject: "Cap #{i}", status: IssueStatus.find(1)) }
+        board = Board.new(@project)
+
+        cols = board.columns
+        rendered = cols.sum { |c| c.cards.size }
+        counted  = cols.sum(&:wip_count)
+
+        assert_operator rendered, :<=, 2, 'rendered cards must not exceed the cap'
+        assert_operator counted, :>=, 5, 'wip_count must reflect the true total'
+        assert board.over_cap?, 'over_cap? must be true when total exceeds the cap'
+      end
+    end
+
+    # --- subproject scope (issue 0007): default off, opt-in include ---
+
+    # Default off: a subproject leaf is excluded. Opt-in include: it appears.
+    def test_subproject_leaf_excluded_by_default_included_on_request
+      sub = @project.children.where(is_public: true, status: Project::STATUS_ACTIVE).first
+      assert sub, 'fixtures must give project 1 a public active subproject'
+      leaf = Issue.create!(
+        project: sub, tracker: Tracker.find(1), author: User.find(1),
+        status: IssueStatus.find(1), priority: IssuePriority.first,
+        subject: 'Subproject leaf'
+      )
+
+      refute_includes Board.new(@project).cards, leaf
+      assert_includes Board.new(@project, include_subprojects: true).cards, leaf
+    end
+
     private
+
+    def with_plugin_columns_and_cap(cap:)
+      previous = Setting.plugin_redmine_ez_kanban
+      Setting.plugin_redmine_ez_kanban = previous.merge('render_cap' => cap)
+      yield
+    ensure
+      Setting.plugin_redmine_ez_kanban = previous
+    end
 
     def column(columns, key)
       columns.find { |c| c.key == key }

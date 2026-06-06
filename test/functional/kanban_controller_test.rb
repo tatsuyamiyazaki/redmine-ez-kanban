@@ -291,6 +291,53 @@ class KanbanControllerTest < Redmine::ControllerTest
                   query.id.to_s, text: /Pinned/
   end
 
+  # R-0007: when the matching cards exceed the render cap, the over-capacity
+  # banner appears; under the cap it does not.
+  def test_over_cap_banner_shown_only_when_exceeded
+    Role.find(1).add_permission!(:view_ez_kanban)
+    2.times do |i|
+      Issue.create!(
+        project: @project, tracker: Tracker.find(1), author: User.find(2),
+        status: IssueStatus.find(1), priority: IssuePriority.first,
+        subject: "Cap #{i}"
+      )
+    end
+
+    with_plugin_settings('render_cap' => '1') do
+      get :show, params: { project_id: @project.id }
+    end
+    assert_select '.ez-kanban-over-cap'
+
+    with_plugin_settings('render_cap' => '500') do
+      get :show, params: { project_id: @project.id }
+    end
+    assert_select '.ez-kanban-over-cap', count: 0
+  end
+
+  # R-0007 scope A: the subproject toggle defaults off, so a subproject leaf is
+  # absent; passing subprojects=1 includes it and marks the toggle checked.
+  def test_subproject_toggle_defaults_off_and_includes_when_set
+    # Run as admin so the focus is the subproject scope, not fixture
+    # visibility (visibility is covered in BoardTest).
+    @request.session[:user_id] = 1
+    sub = @project.children.where(is_public: true, status: Project::STATUS_ACTIVE).first
+    assert sub, 'fixtures must give project 1 a public active subproject'
+    leaf = Issue.create!(
+      project: sub, tracker: Tracker.find(1), author: User.find(1),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Sub leaf'
+    )
+
+    get :show, params: { project_id: @project.id }
+    assert_select '#ez-kanban-subprojects'
+    assert_select '#ez-kanban-subprojects[checked]', count: 0
+    assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s, count: 0
+
+    get :show, params: { project_id: @project.id, subprojects: '1' }
+    assert_select '#ez-kanban-subprojects[checked]'
+    assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s
+  end
+
   private
 
   def enable_ez_kanban(project)

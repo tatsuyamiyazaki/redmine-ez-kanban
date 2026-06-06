@@ -56,6 +56,15 @@
   </label>
 </p>
 
+<p>
+  <label for="settings_render_cap"><%= l(:label_ez_kanban_render_cap) %></label>
+  <%# Global render cap (issue 0007). Blank/invalid falls back to the default. %>
+  <%= number_field_tag 'settings[render_cap]',
+                       (settings['render_cap'].presence || EzKanban::Board::DEFAULT_RENDER_CAP),
+                       id: 'settings_render_cap', min: 1, step: 1 %>
+  <em class="info"><%= l(:text_ez_kanban_render_cap_note) %></em>
+</p>
+
 <%# Template row for the "Add column" button to clone (index __INDEX__). %>
 <script type="text/html" id="ez-kanban-row-template">
   <%= escape_javascript(render(partial: 'settings/ez_kanban_column_row',

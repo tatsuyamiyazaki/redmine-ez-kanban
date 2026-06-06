@@ -14,7 +14,10 @@ Redmine::Plugin.register :redmine_ez_kanban do
   # means "use the built-in default layout"; the admin editor (issue 0005)
   # populates it. 'highlight_wip' is the opt-in WIP threshold highlight, off by
   # default (R10-3).
-  settings default: { 'columns' => [], 'highlight_wip' => false },
+  # 'render_cap' is the global cap on drawn cards (issue 0007), default 500;
+  # excess cards are not rendered but WIP counts stay true.
+  settings default: { 'columns' => [], 'highlight_wip' => false,
+                      'render_cap' => 500 },
            partial: 'settings/ez_kanban_settings'
 
   project_module :ez_kanban do

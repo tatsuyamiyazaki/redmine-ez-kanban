@@ -15,11 +15,18 @@ class KanbanController < ApplicationController
   before_action :authorize
 
   def show
-    board = EzKanban::Board.new(@project, query: board_query)
+    # Subproject inclusion is a board range control, off by default; its state
+    # rides in the URL so reload/share restore it (R-0007, scope A).
+    @include_subprojects = params[:subprojects] == '1'
+    board = EzKanban::Board.new(@project, query: board_query,
+                                          include_subprojects: @include_subprojects)
     # The effective query (an explicit/saved one, or the unrestricted default)
     # drives the filter UI so it reflects the current board state (R7).
     @query = board.query
     @columns = board.columns
+    # Render cap state for the over-capacity banner (R-0007).
+    @over_cap = board.over_cap?
+    @render_cap = board.render_cap
     # WIP threshold highlight is opt-in and global (R10-3); off by default.
     @highlight_wip = board.highlight_wip?
     # Ancestor paths for every card, resolved in one query (R2, no N+1).

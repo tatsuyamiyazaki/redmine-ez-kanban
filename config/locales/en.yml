@@ -6,6 +6,11 @@ en:
   # Filter UI / saved queries (issue 0006)
   label_ez_kanban_saved_query: Saved query
   label_ez_kanban_no_query: "(No query – all issues)"
+  # Render cap / subprojects (issue 0007)
+  label_ez_kanban_include_subprojects: Include subproject issues
+  label_ez_kanban_render_cap: Maximum rendered cards
+  text_ez_kanban_over_cap: "Too many results (cap %{count}). Narrow it down with a filter or scope."
+  text_ez_kanban_render_cap_note: The most cards the board draws at once. Excess cards are not drawn, but each column's count still shows the true total.
   # Admin column config UI (issue 0005)
   label_ez_kanban_columns: Columns
   label_ez_kanban_column_name: Column name
