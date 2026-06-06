@@ -28,7 +28,10 @@ Administration → Plugins に `Redmine EZ Kanban` が出れば認識成功。
 ## テスト実行
 
 公式イメージは本番用で development/test の gem を除外しているため、初回のみ
-test グループの gem を入れてからテストする。`bin/test.sh` がこれを一括で行う:
+test グループの gem を入れてからテストする。`bin/test.sh` がこれを一括で行う
+（native 拡張を持つ gem＝`debug` 等のビルドに `build-essential` が要るため、
+slim イメージでは未導入だと `bundle install` が失敗する。`bin/test.sh` が
+不足時に自動導入する）:
 
 ```bash
 docker compose exec redmine bash /usr/src/redmine/plugins/redmine_ez_kanban/bin/test.sh
@@ -40,6 +43,33 @@ docker compose exec redmine bash /usr/src/redmine/plugins/redmine_ez_kanban/bin/
 docker compose exec redmine bash -lc \
   "cd /usr/src/redmine && RAILS_ENV=test bundle exec ruby -Itest \
    plugins/redmine_ez_kanban/test/functional/kanban_controller_test.rb"
+```
+
+## CSS / JS を変更したとき（本番アセットの再コンパイル）
+
+本番（production）では Propshaft が **precompile 済みのフィンガープリント資産**
+（例 `public/assets/plugin_assets/redmine_ez_kanban/ez_kanban-<hash>.css`）を配信する。
+`assets/stylesheets/*.css` や `assets/javascripts/*.js` を編集しても、**ソース変更＋
+コンテナ再起動だけでは新しいフィンガープリントが生成されず、古い資産が配信され続ける**。
+ブラウザをハードリロードしても直らない（リンク先の hash が変わらないため）。
+
+変更を反映するには強制再生成が必要:
+
+```bash
+docker compose exec -u root redmine bash -lc \
+  "cd /usr/src/redmine && RAILS_ENV=production SECRET_KEY_BASE=dummy \
+   bundle exec rails assets:clobber && \
+   RAILS_ENV=production SECRET_KEY_BASE=dummy bundle exec rails assets:precompile"
+docker compose restart redmine
+```
+
+再生成後は hash が変わる（例 `ez_kanban-82e5b4a5.css` → `ez_kanban-12bcbf90.css`）ので、
+HTML の `<link>` も新 URL を指し、ブラウザは通常リロードで新規取得する。
+配信中の中身は次で確認できる:
+
+```bash
+docker compose exec redmine bash -lc \
+  "grep -n priority public/assets/plugin_assets/redmine_ez_kanban/ez_kanban-*.css"
 ```
 
 ## 停止 / クリーンアップ

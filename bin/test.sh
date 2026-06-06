@@ -13,6 +13,12 @@ PLUGIN_ROOT="$REDMINE_ROOT/plugins/$PLUGIN"
 
 cd "$REDMINE_ROOT"
 
+# slim イメージは native 拡張のビルドツール未導入。debug 等の test gem が
+# native ビルドを要するため、make/gcc が無ければ build-essential を導入する。
+if ! command -v make >/dev/null 2>&1 || ! command -v gcc >/dev/null 2>&1; then
+  apt-get update -qq && apt-get install -y -qq build-essential
+fi
+
 # 公式 slim イメージは development/test グループ未導入。
 # development(rubocop 等) はネイティブ拡張のビルドツールを要するため除外し、
 # test グループのみ導入する。
