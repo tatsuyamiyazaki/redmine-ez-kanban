@@ -16,8 +16,16 @@
         <% if index.positive? %>
           <span class="ez-kanban-card__crumb-sep">/</span>
         <% end %>
-        <%= link_to ancestor.subject, issue_path(ancestor),
-                    class: 'ez-kanban-card__crumb' %>
+        <%#
+          Clicking a crumb scopes the board to that ancestor (R3): link to the
+          same board with scope_issue_id set, preserving the current query/
+          filter params in the URL so scope ANDs with the active filter.
+        %>
+        <%= link_to ancestor.subject,
+                    project_ez_kanban_path(@project,
+                      request.query_parameters.merge('scope_issue_id' => ancestor.id)),
+                    class: 'ez-kanban-card__crumb',
+                    title: l(:label_ez_kanban_scope_to, subject: ancestor.subject) %>
       <% end %>
     </nav>
   <% end %>

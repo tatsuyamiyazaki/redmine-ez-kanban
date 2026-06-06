@@ -338,6 +338,77 @@ class KanbanControllerTest < Redmine::ControllerTest
     assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s
   end
 
+  # R3 (issue 0008): scope_issue_id restricts the board to a parent's
+  # descendant leaves; the parent (not a leaf) and outside leaves are absent.
+  # The id rides in the URL so reload/share restore the scope.
+  def test_scope_param_restricts_cards_to_descendant_leaves
+    Role.find(1).add_permission!(:view_ez_kanban)
+    parent = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Scope root'
+    )
+    inside = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Inside leaf', parent_issue_id: parent.id
+    )
+    outside = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Outside leaf'
+    )
+
+    get :show, params: { project_id: @project.id, scope_issue_id: parent.id }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", inside.id.to_s
+    assert_select ".ez-kanban-card[data-issue-id=?]", outside.id.to_s, count: 0
+    assert_select ".ez-kanban-card[data-issue-id=?]", parent.id.to_s, count: 0
+  end
+
+  # R3 (issue 0008): each breadcrumb crumb links to scoping the board on that
+  # ancestor, carrying scope_issue_id in the URL.
+  def test_breadcrumb_crumb_links_to_scope_on_ancestor
+    Role.find(1).add_permission!(:view_ez_kanban)
+    root = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Scopeable root'
+    )
+    leaf = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Child leaf', parent_issue_id: root.id
+    )
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s do
+      assert_select "a.ez-kanban-card__crumb[href*=?]", "scope_issue_id=#{root.id}"
+    end
+  end
+
+  # R3-4: while scoped, a clear-scope control is shown to return to the full
+  # flat board; with no scope it is absent.
+  def test_scope_clear_control_shown_only_when_scoped
+    Role.find(1).add_permission!(:view_ez_kanban)
+    parent = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Scoped parent'
+    )
+
+    get :show, params: { project_id: @project.id }
+    assert_select '.ez-kanban-scope', count: 0
+
+    get :show, params: { project_id: @project.id, scope_issue_id: parent.id }
+    assert_select '.ez-kanban-scope' do
+      assert_select 'a.ez-kanban-scope__clear'
+    end
+  end
+
   private
 
   def enable_ez_kanban(project)

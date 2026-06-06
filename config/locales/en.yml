@@ -6,6 +6,10 @@ en:
   # Filter UI / saved queries (issue 0006)
   label_ez_kanban_saved_query: Saved query
   label_ez_kanban_no_query: "(No query – all issues)"
+  # Parent scope (issue 0008)
+  label_ez_kanban_scoped_to: "Scoped to children of \"%{subject}\""
+  label_ez_kanban_scope_to: "Scope to children of \"%{subject}\""
+  button_ez_kanban_clear_scope: Clear scope
   # Render cap / subprojects (issue 0007)
   label_ez_kanban_include_subprojects: Include subproject issues
   label_ez_kanban_render_cap: Maximum rendered cards

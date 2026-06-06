@@ -215,6 +215,55 @@ module EzKanban
       assert_includes Board.new(@project, include_subprojects: true).cards, leaf
     end
 
+    # --- parent scope (issue 0008): restrict to a parent's descendant leaves ---
+
+    # Tracer (R3): scoping to a parent shows only its descendant leaves at any
+    # depth; the parent itself, intermediate parents, and leaves outside the
+    # subtree are all excluded.
+    def test_scope_shows_only_descendant_leaves_of_parent
+      parent = create_issue(subject: 'Scope parent')
+      child  = create_issue(subject: 'Direct child', parent_issue_id: parent.id)
+      mid    = create_issue(subject: 'Middle', parent_issue_id: parent.id)
+      grand  = create_issue(subject: 'Grandchild', parent_issue_id: mid.id)
+      outside = create_issue(subject: 'Outside leaf')
+      parent.reload
+
+      cards = Board.new(@project, scope_issue: parent).cards
+
+      assert_includes cards, child,   'a direct child leaf must appear'
+      assert_includes cards, grand,   'a deep descendant leaf must appear'
+      refute_includes cards, parent,  'the scope parent itself is never a card'
+      refute_includes cards, mid,     'an intermediate parent is not a leaf'
+      refute_includes cards, outside, 'a leaf outside the subtree is excluded'
+    end
+
+    # R3-3 / R7-4: the scope condition is ANDed with the active query filter,
+    # so a descendant that does not match the filter is still excluded.
+    def test_scope_is_anded_with_filter
+      parent = create_issue(subject: 'AND parent')
+      keep   = create_issue(subject: 'Inside KEEP', parent_issue_id: parent.id)
+      drop   = create_issue(subject: 'Inside other', parent_issue_id: parent.id)
+      parent.reload
+
+      cards = Board.new(@project, query: query_with_subject('KEEP'),
+                                  scope_issue: parent).cards
+
+      assert_includes cards, keep
+      refute_includes cards, drop, 'a descendant not matching the filter is excluded'
+    end
+
+    # R3-4: with no scope the board stays flat over every leaf (regression
+    # guard that scope is purely additive).
+    def test_no_scope_keeps_full_flat_board
+      a = create_issue(subject: 'Leaf A')
+      b = create_issue(subject: 'Leaf B')
+
+      cards = Board.new(@project, scope_issue: nil).cards
+
+      assert_includes cards, a
+      assert_includes cards, b
+    end
+
     private
 
     def with_plugin_columns_and_cap(cap:)

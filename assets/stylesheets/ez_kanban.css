@@ -140,3 +140,23 @@
   margin-top: 6px;
   font-size: 0.85em;
 }
+
+/* Active parent scope banner (issue 0008, R3) */
+.ez-kanban-scope {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 6px 10px;
+  background: #eef5fb;
+  border: 1px solid #bcd7ee;
+  border-radius: 3px;
+}
+
+.ez-kanban-scope__label {
+  font-weight: bold;
+}
+
+.ez-kanban-scope__clear {
+  margin-left: auto;
+}

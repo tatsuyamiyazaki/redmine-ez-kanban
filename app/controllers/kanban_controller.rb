@@ -18,8 +18,14 @@ class KanbanController < ApplicationController
     # Subproject inclusion is a board range control, off by default; its state
     # rides in the URL so reload/share restore it (R-0007, scope A).
     @include_subprojects = params[:subprojects] == '1'
+    # Optional parent scope (R3): restrict the board to a parent's descendant
+    # leaves. Resolved through Issue.visible so an unreadable/absent id simply
+    # yields no scope (never leaking existence). Its id rides in the URL so
+    # reload/share restore it.
+    @scope_issue = find_scope_issue
     board = EzKanban::Board.new(@project, query: board_query,
-                                          include_subprojects: @include_subprojects)
+                                          include_subprojects: @include_subprojects,
+                                          scope_issue: @scope_issue)
     # The effective query (an explicit/saved one, or the unrestricted default)
     # drives the filter UI so it reflects the current board state (R7).
     @query = board.query
@@ -44,5 +50,14 @@ class KanbanController < ApplicationController
     return unless params[:query_id].present? || params[:set_filter].present?
 
     retrieve_query(IssueQuery)
+  end
+
+  # The scope parent (R3), or nil. Looked up through Issue.visible so the scope
+  # honors Redmine's visibility rules and an absent/forbidden id falls back to
+  # the unscoped board rather than erroring.
+  def find_scope_issue
+    return if params[:scope_issue_id].blank?
+
+    Issue.visible.find_by(id: params[:scope_issue_id])
   end
 end

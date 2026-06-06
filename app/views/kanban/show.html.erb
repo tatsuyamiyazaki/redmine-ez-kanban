@@ -8,6 +8,20 @@
 
 <%= render partial: 'filters' %>
 
+<%# Active parent scope (R3): show what the board is scoped to and a control to
+    clear it, returning to the full flat board while keeping the other URL
+    params (active query/filter, subproject toggle). %>
+<% if @scope_issue %>
+  <div class="ez-kanban-scope">
+    <span class="ez-kanban-scope__label">
+      <%= l(:label_ez_kanban_scoped_to, subject: @scope_issue.subject) %>
+    </span>
+    <%= link_to l(:button_ez_kanban_clear_scope),
+                project_ez_kanban_path(@project, request.query_parameters.except('scope_issue_id')),
+                class: 'ez-kanban-scope__clear icon icon-del' %>
+  </div>
+<% end %>
+
 <% if @over_cap %>
   <div class="flash warning ez-kanban-over-cap">
     <%= l(:text_ez_kanban_over_cap, count: @render_cap) %>

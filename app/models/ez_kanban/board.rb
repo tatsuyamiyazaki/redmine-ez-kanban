@@ -20,11 +20,16 @@ module EzKanban
     # 0006) can render the current filters and selected saved query.
     attr_reader :query
 
-    def initialize(project, query: nil, include_subprojects: false)
+    def initialize(project, query: nil, include_subprojects: false,
+                   scope_issue: nil)
       @project = project
       # Board range control (R-0007, scope A): off by default restricts the
       # board to this project's own issues; on widens it to all descendants.
       @include_subprojects = include_subprojects
+      # Optional single-parent scope (R3): when set, restrict the board to all
+      # descendant leaves of this issue at any depth, ANDed with the active
+      # query (R7-4). nil leaves the board flat over every leaf.
+      @scope_issue = scope_issue
       # A caller-supplied query carries its own sort (R9); the board's own
       # default query is treated as unsorted so the R9 fallback order applies.
       # (The default query still has IssueQuery's built-in sort, which is not
@@ -37,7 +42,12 @@ module EzKanban
     # query runs once per board (columns and over_cap? both read it).
     def cards
       # IssueQuery#issues already restricts to issues visible to User.current.
-      @cards ||= scoped_issues.select(&:leaf?)
+      @cards ||= begin
+        leaves = scoped_issues.select(&:leaf?)
+        # Parent scope (R3) intersects the filtered leaves with the chosen
+        # parent's subtree; off, the board stays flat over every leaf.
+        @scope_issue ? leaves.select { |leaf| within_scope?(leaf) } : leaves
+      end
     end
 
     # The cap on how many cards the board renders (R-0007). Admin-set via
@@ -93,6 +103,16 @@ module EzKanban
       else
         @query.issues(conditions: { "#{Issue.table_name}.project_id" => @project.id })
       end
+    end
+
+    # Whether an issue is a strict descendant of the scope parent via the
+    # nested set: same tree (root_id) and inside the parent's lft..rgt bounds
+    # (R3-2, depth-agnostic). The strict comparison excludes the parent itself,
+    # which is never a leaf and so never a card anyway.
+    def within_scope?(issue)
+      issue.root_id == @scope_issue.root_id &&
+        issue.lft > @scope_issue.lft &&
+        issue.rgt < @scope_issue.rgt
     end
 
     # In-column order (R9): follow the query's sort when one was supplied;

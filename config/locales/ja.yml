@@ -6,6 +6,10 @@ ja:
   # フィルタUI・保存クエリ（issue 0006）
   label_ez_kanban_saved_query: 保存したクエリ
   label_ez_kanban_no_query: （クエリなし・全件）
+  # スコープ（親による絞り込み）（issue 0008）
+  label_ez_kanban_scoped_to: "「%{subject}」配下にスコープ中"
+  label_ez_kanban_scope_to: "「%{subject}」配下にスコープ"
+  button_ez_kanban_clear_scope: スコープ解除
   # 件数上限・サブプロジェクト（issue 0007）
   label_ez_kanban_include_subprojects: サブプロジェクトのチケットを含める
   label_ez_kanban_render_cap: 描画カードの上限件数
