@@ -6,6 +6,10 @@ ja:
   # フィルタUI・保存クエリ（issue 0006）
   label_ez_kanban_saved_query: 保存したクエリ
   label_ez_kanban_no_query: （クエリなし・全件）
+  # 表示鮮度（手動更新・任意ポーリング）（issue 0009）
+  button_ez_kanban_refresh: 更新
+  label_ez_kanban_poll_interval: 自動更新
+  label_ez_kanban_poll_off: オフ
   # スコープ（親による絞り込み）（issue 0008）
   label_ez_kanban_scoped_to: "「%{subject}」配下にスコープ中"
   label_ez_kanban_scope_to: "「%{subject}」配下にスコープ"

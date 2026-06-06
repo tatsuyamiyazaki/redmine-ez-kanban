@@ -1,0 +1,30 @@
+<%#
+  Board content (over-capacity banner + status columns). Rendered both on the
+  full page and, on its own, for AJAX refresh (issue 0009). It reads the same
+  request-derived ivars (@columns/@over_cap/@render_cap/@highlight_wip/
+  @ancestry), so a refreshed fragment matches the initial render under the
+  current filter/scope/subproject/cap state.
+%>
+<% if @over_cap %>
+  <div class="flash warning ez-kanban-over-cap">
+    <%= l(:text_ez_kanban_over_cap, count: @render_cap) %>
+  </div>
+<% end %>
+
+<div class="ez-kanban-board">
+  <% @columns.each do |column| %>
+    <% over_wip = @highlight_wip && column.over_wip? %>
+    <section class="ez-kanban-column<%= ' ez-kanban-column--over-wip' if over_wip %>"
+             data-column-key="<%= column.key %>">
+      <header class="ez-kanban-column__header">
+        <span class="ez-kanban-column__title"><%= column.name %></span>
+        <span class="ez-kanban-column__count"<%= ' title=' + l(:label_ez_kanban_wip_over).inspect if over_wip %>><%= column.wip_count %><% if column.wip_limit %> / <%= column.wip_limit %><% end %></span>
+      </header>
+
+      <div class="ez-kanban-column__cards">
+        <%= render partial: 'card', collection: column.cards, as: :issue,
+                   locals: { ancestry: @ancestry } %>
+      </div>
+    </section>
+  <% end %>
+</div>

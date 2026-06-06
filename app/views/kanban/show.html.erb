@@ -22,26 +22,24 @@
   </div>
 <% end %>
 
-<% if @over_cap %>
-  <div class="flash warning ez-kanban-over-cap">
-    <%= l(:text_ez_kanban_over_cap, count: @render_cap) %>
-  </div>
-<% end %>
-
-<div class="ez-kanban-board">
-  <% @columns.each do |column| %>
-    <% over_wip = @highlight_wip && column.over_wip? %>
-    <section class="ez-kanban-column<%= ' ez-kanban-column--over-wip' if over_wip %>"
-             data-column-key="<%= column.key %>">
-      <header class="ez-kanban-column__header">
-        <span class="ez-kanban-column__title"><%= column.name %></span>
-        <span class="ez-kanban-column__count"<%= ' title=' + l(:label_ez_kanban_wip_over).inspect if over_wip %>><%= column.wip_count %><% if column.wip_limit %> / <%= column.wip_limit %><% end %></span>
-      </header>
-
-      <div class="ez-kanban-column__cards">
-        <%= render partial: 'card', collection: column.cards, as: :issue,
-                   locals: { ancestry: @ancestry } %>
-      </div>
-    </section>
-  <% end %>
+<%# Freshness controls (issue 0009): a manual refresh button plus an opt-in
+    polling-interval selector (default off). Both are driven by ez_kanban_board.js,
+    which re-fetches the current URL (preserving filter/scope/subproject/cap
+    state) and swaps only the board container's contents, keeping scroll. %>
+<div class="ez-kanban-toolbar">
+  <button type="button" id="ez-kanban-refresh" class="icon icon-reload">
+    <%= l(:button_ez_kanban_refresh) %>
+  </button>
+  <label for="ez-kanban-poll-interval"><%= l(:label_ez_kanban_poll_interval) %></label>
+  <%= select_tag 'ez_kanban_poll_interval',
+        options_for_select(
+          [[l(:label_ez_kanban_poll_off), '0'], ['30s', '30'],
+           ['60s', '60'], ['120s', '120']], '0'),
+        id: 'ez-kanban-poll-interval' %>
 </div>
+
+<div id="ez-kanban-board-container">
+  <%= render partial: 'board' %>
+</div>
+
+<%= javascript_include_tag 'ez_kanban_board', plugin: 'redmine_ez_kanban' %>

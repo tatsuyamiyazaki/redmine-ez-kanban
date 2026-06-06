@@ -409,6 +409,64 @@ class KanbanControllerTest < Redmine::ControllerTest
     end
   end
 
+  # --- freshness: AJAX partial refresh (issue 0009) ---
+
+  # Tracer: an XHR GET returns only the board fragment (columns + cards),
+  # without the page chrome (filter form), so the client can swap it in place.
+  def test_xhr_refresh_returns_only_board_partial
+    Role.find(1).add_permission!(:view_ez_kanban)
+    leaf = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Fresh card'
+    )
+
+    get :show, params: { project_id: @project.id }, xhr: true
+
+    assert_response :success
+    assert_select '.ez-kanban-board'
+    assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s
+    # No page chrome in the fragment proves it is the partial, not the full page.
+    assert_select 'form#ez-kanban-query-form', count: 0
+  end
+
+  # Refresh preserves state: an XHR refresh carrying the active filter returns
+  # only the matching cards, exactly as the full page would (R-NFB).
+  def test_xhr_refresh_preserves_filter_state
+    Role.find(1).add_permission!(:view_ez_kanban)
+    keep = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first, subject: 'Keep'
+    )
+    drop = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(5), priority: IssuePriority.first, subject: 'Drop'
+    )
+
+    get :show, params: {
+      project_id: @project.id, set_filter: '1',
+      f: ['status_id'], op: { 'status_id' => '=' }, v: { 'status_id' => ['1'] }
+    }, xhr: true
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", keep.id.to_s
+    assert_select ".ez-kanban-card[data-issue-id=?]", drop.id.to_s, count: 0
+  end
+
+  # R-NFB: the board carries a manual refresh control plus a polling-interval
+  # selector whose default is off (costly polling is opt-in, like WIP highlight).
+  def test_refresh_control_and_polling_selector_present_default_off
+    Role.find(1).add_permission!(:view_ez_kanban)
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select 'button#ez-kanban-refresh'
+    assert_select 'select#ez-kanban-poll-interval' do
+      assert_select 'option[value=?][selected]', '0'
+    end
+  end
+
   private
 
   def enable_ez_kanban(project)

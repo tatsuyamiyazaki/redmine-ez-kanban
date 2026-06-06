@@ -6,6 +6,10 @@ en:
   # Filter UI / saved queries (issue 0006)
   label_ez_kanban_saved_query: Saved query
   label_ez_kanban_no_query: "(No query – all issues)"
+  # Freshness: manual refresh / optional polling (issue 0009)
+  button_ez_kanban_refresh: Refresh
+  label_ez_kanban_poll_interval: Auto-refresh
+  label_ez_kanban_poll_off: "Off"
   # Parent scope (issue 0008)
   label_ez_kanban_scoped_to: "Scoped to children of \"%{subject}\""
   label_ez_kanban_scope_to: "Scope to children of \"%{subject}\""

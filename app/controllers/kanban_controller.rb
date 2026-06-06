@@ -37,6 +37,11 @@ class KanbanController < ApplicationController
     @highlight_wip = board.highlight_wip?
     # Ancestor paths for every card, resolved in one query (R2, no N+1).
     @ancestry = EzKanban::Ancestry.for(@columns.flat_map(&:cards))
+    # Freshness (issue 0009): an XHR asks only for the board fragment so the
+    # client can swap it in place, keeping the page (and scroll) and all current
+    # filter/scope/subproject/cap state carried in the URL. Read-only — a plain
+    # GET that renders, never writes (R5).
+    render partial: 'board', layout: false if request.xhr?
   end
 
   private
