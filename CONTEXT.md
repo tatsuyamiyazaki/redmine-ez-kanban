@@ -35,3 +35,7 @@ _Avoid_: trail, path, hierarchy label
 **WIP**:
 The per-Column count of Cards, plus an optional threshold that visually highlights an over-capacity Column. Highlighting is off by default and never affects placement or visibility.
 _Avoid_: load, capacity, limit
+
+**Priority Color** (優先度色):
+A color stripe on a Card's left edge that reflects the issue's priority. The level is taken from Redmine's relative priority position (`position_name`: lowest / low / default / high / highest), so it tracks the admin's active priority set automatically and matches Redmine's issue-list highlighting. Every non-`default` level shows a stripe in Redmine's palette; `default` shows none. Always on. Like [[WIP]] highlighting, it is purely informational and never affects [[Card]] placement, sort order, or visibility — the priority name also stays as text, so color is a redundant cue.
+_Avoid_: priority flag, severity color, priority badge

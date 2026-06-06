@@ -467,6 +467,46 @@ class KanbanControllerTest < Redmine::ControllerTest
     end
   end
 
+  # --- priority color (issue 0010) ---
+
+  # A card for a non-default-priority leaf carries the priority stripe class
+  # derived from Redmine's relative position (position_name), so the colour
+  # tracks the admin's active priority set instead of a re-implemented scale.
+  def test_card_carries_priority_class_for_non_default_priority
+    Role.find(1).add_permission!(:view_ez_kanban)
+    priority = IssuePriority.active.detect { |p| p.position_name != 'default' }
+    assert priority, 'fixtures must provide a non-default active priority'
+    leaf = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: priority, subject: 'Priced leaf'
+    )
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?].priority-#{priority.position_name}",
+                  leaf.id.to_s
+  end
+
+  # The default priority shows no stripe: its card root carries no priority-*
+  # class, so an all-"Normal" project looks unchanged (the colour is opt-out by
+  # nature, never added noise).
+  def test_default_priority_card_has_no_priority_class
+    Role.find(1).add_permission!(:view_ez_kanban)
+    leaf = Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.default,
+      subject: 'Default priced leaf'
+    )
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s
+    assert_select ".ez-kanban-card[data-issue-id=?][class*=?]",
+                  leaf.id.to_s, 'priority-', count: 0
+  end
+
   private
 
   def enable_ez_kanban(project)

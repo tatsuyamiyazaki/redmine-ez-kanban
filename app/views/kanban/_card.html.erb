@@ -2,7 +2,18 @@
   A single read-only Card for a leaf issue (issue 0002).
   No edit/drag affordances (R5); clicking through goes to Redmine's issue view.
 %>
-<div class="ez-kanban-card" data-issue-id="<%= issue.id %>">
+<%#
+  Priority colour stripe (issue 0010): the card's left edge is coloured by the
+  issue's priority, reusing Redmine's relative position (position_name:
+  lowest/low/default/high/highest) so it tracks the admin's active priority set
+  and matches Redmine's issue-list highlighting. Only non-`default` levels get a
+  class (default shows no stripe); a nil position_name falls back to no stripe.
+  Purely informational — it never affects placement, sort, or visibility (R10).
+%>
+<% priority_name = issue.priority.position_name %>
+<% card_classes = ['ez-kanban-card'] %>
+<% card_classes << "priority-#{priority_name}" if priority_name.present? && priority_name != 'default' %>
+<div class="<%= card_classes.join(' ') %>" data-issue-id="<%= issue.id %>">
   <%#
     Breadcrumb (R2): root -> nearest parent. Full path in title for hover;
     overflow collapsing to "root … nearest" is handled in CSS by width. Cards

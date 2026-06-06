@@ -92,6 +92,29 @@
   padding: 8px;
 }
 
+/* Priority colour stripe (issue 0010). The card root carries a
+ * priority-<position_name> class (lowest/low/high/highest) emitted by the view;
+ * `default` gets no class and so no stripe. The class semantics are Redmine's
+ * (IssuePriority#position_name); only the stripe colours live here, since
+ * Redmine's own priority palette targets issue-list table cells, not cards.
+ * A cool→warm ramp keeps high-priority cards scannable without alarming the
+ * read-only board. Purely informational: never affects placement (R10). */
+.ez-kanban-card.priority-lowest {
+  border-left: 4px solid #9aa7b5;
+}
+
+.ez-kanban-card.priority-low {
+  border-left: 4px solid #4a90d9;
+}
+
+.ez-kanban-card.priority-high {
+  border-left: 4px solid #f0883e;
+}
+
+.ez-kanban-card.priority-highest {
+  border-left: 4px solid #d0021b;
+}
+
 .ez-kanban-card__header {
   display: flex;
   align-items: center;
