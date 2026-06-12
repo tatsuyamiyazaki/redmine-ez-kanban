@@ -65,7 +65,11 @@
   <em class="info"><%= l(:text_ez_kanban_render_cap_note) %></em>
 </p>
 
-<%# Template row for the "Add column" button to clone (index __INDEX__). %>
+<%# Template row for the "Add column" button to clone (index __INDEX__).
+    Security invariant: this block is inert (type="text/html", never executed
+    as script). escape_javascript + html_safe is safe ONLY because the row
+    partial escapes all dynamic content through standard ERB/tag helpers —
+    re-review this block if the partial ever emits raw/html_safe content. %>
 <script type="text/html" id="ez-kanban-row-template">
   <%= escape_javascript(render(partial: 'settings/ez_kanban_column_row',
                                locals: { index: '__INDEX__', row: nil,

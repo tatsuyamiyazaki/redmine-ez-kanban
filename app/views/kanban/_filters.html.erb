@@ -11,9 +11,11 @@
 <% flipped = request.query_parameters.merge('subprojects' => (@include_subprojects ? '0' : '1')) %>
 <div class="ez-kanban-filters__subprojects">
   <label>
+    <%# Navigation lives in ez_kanban_board.js (no inline JS, CSP-friendly);
+        the toggle only carries the flipped-state URL as data. %>
     <%= check_box_tag 'subprojects', '1', @include_subprojects,
                       id: 'ez-kanban-subprojects',
-                      onchange: "window.location='#{j project_ez_kanban_path(@project, flipped)}';" %>
+                      data: { url: project_ez_kanban_path(@project, flipped) } %>
     <%= l(:label_ez_kanban_include_subprojects) %>
   </label>
 </div>
@@ -30,8 +32,7 @@
               saved_queries.map { |q| [q.name, q.id] },
             @query.persisted? ? @query.id : ''),
           id: 'ez-kanban-query-id',
-          onchange: "window.location='#{project_ez_kanban_path(@project)}'" \
-                    "+(this.value ? '?query_id='+encodeURIComponent(this.value) : '');" %>
+          data: { base_url: project_ez_kanban_path(@project) } %>
   </div>
 
   <fieldset id="filters" class="collapsible collapsed">

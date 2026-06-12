@@ -16,7 +16,7 @@ module EzKanban
     # @return [Array<Hash>] clean specs keyed by symbols.
     def normalize(raw)
       specs = rows(raw).filter_map do |row|
-        key = row['key'].to_s
+        key = sanitize_key(row['key'])
         name = row['name'].to_s.strip
         next if name.empty? || key == Layout::UNCLASSIFIED_KEY
 
@@ -28,10 +28,22 @@ module EzKanban
       enforce_single_is_done(specs)
     end
 
-    # A blank threshold means "none" (nil); otherwise an integer.
+    # Keys are machine identifiers (DOM data attributes, grouping keys); the
+    # editor generates them as col_N / status_N. Restrict posted keys to that
+    # alphabet so corrupted or hostile input degrades to a plain token.
+    def sanitize_key(raw)
+      raw.to_s.gsub(/[^a-zA-Z0-9_-]/, '')
+    end
+
+    # A blank threshold means "none" (nil); otherwise a non-negative integer.
+    # Negative input would mark the column over-WIP forever, so it also means
+    # "none". Zero stays valid ("nothing belongs here"), the editor's min.
     def wip_limit(raw)
       value = raw.to_s.strip
-      value.empty? ? nil : value.to_i
+      return if value.empty?
+
+      limit = value.to_i
+      limit.negative? ? nil : limit
     end
 
     # Checkbox/radio submit '1'/'true'/'on' when set, '0'/'' otherwise.

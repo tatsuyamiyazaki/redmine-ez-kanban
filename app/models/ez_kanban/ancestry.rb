@@ -33,14 +33,16 @@ module EzKanban
       end.sort_by(&:lft)
     end
 
-    # One query for every card's ancestors via the nested set. Values are cast
-    # to integers, so the interpolated conditions carry no untrusted input.
+    # One query for every card's ancestors via the nested set, built with Arel
+    # so no SQL is ever assembled from strings.
     def load_ancestors
-      conditions = @cards.map do |card|
-        "(root_id = #{card.root_id.to_i} AND lft < #{card.lft.to_i} " \
-          "AND rgt > #{card.rgt.to_i})"
-      end.join(' OR ')
-      Issue.where(conditions).to_a
+      issues = Issue.arel_table
+      condition = @cards.map do |card|
+        issues[:root_id].eq(card.root_id)
+                        .and(issues[:lft].lt(card.lft))
+                        .and(issues[:rgt].gt(card.rgt))
+      end.reduce(:or)
+      Issue.where(condition).to_a
     end
   end
 end

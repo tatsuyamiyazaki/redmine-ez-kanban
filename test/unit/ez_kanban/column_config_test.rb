@@ -47,6 +47,22 @@ module EzKanban
       assert_equal [], result.last[:status_ids]
     end
 
+    # Keys are machine identifiers (DOM data attributes, grouping keys). The
+    # editor only generates [a-z0-9_] keys, so anything else in a posted key is
+    # stripped on normalize — hostile or corrupted input degrades to a plain
+    # token instead of riding into markup.
+    def test_normalize_strips_unsafe_characters_from_key
+      raw = [
+        { 'key' => 'todo', 'name' => 'To Do' },
+        { 'key' => '<script>alert(1)</script>col_1', 'name' => 'Messy' }
+      ]
+
+      result = ColumnConfig.normalize(raw)
+
+      assert_equal %w[todo scriptalert1scriptcol_1],
+                   result.map { |spec| spec[:key] }
+    end
+
     # A WIP threshold is an optional positive integer; a blank field means "no
     # threshold" and stores nil so the column is never highlighted (R10-2).
     def test_normalize_coerces_wip_limit_with_blank_as_nil
@@ -59,6 +75,21 @@ module EzKanban
 
       assert_equal 5, result.first[:wip_limit]
       assert_nil result.last[:wip_limit]
+    end
+
+    # A negative threshold is meaningless (it would mark the column over-WIP
+    # forever, even when empty); it normalizes to "no threshold". Zero stays a
+    # valid threshold ("nothing belongs here"), matching the editor's min of 0.
+    def test_normalize_treats_negative_wip_limit_as_none
+      raw = [
+        { 'key' => 'neg', 'name' => 'Negative', 'wip_limit' => '-1' },
+        { 'key' => 'zero', 'name' => 'Zero', 'wip_limit' => '0' }
+      ]
+
+      result = ColumnConfig.normalize(raw)
+
+      assert_nil result.first[:wip_limit]
+      assert_equal 0, result.last[:wip_limit]
     end
 
     # Exactly one column may be the is_done column (ADR-0004). If a stray form

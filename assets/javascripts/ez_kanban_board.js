@@ -54,7 +54,31 @@
     }
   }
 
+  // Navigation for the filter controls (no inline handlers, CSP-friendly):
+  // the subproject toggle jumps to its server-built flipped-state URL; the
+  // saved-query selector rebuilds the board URL from its base plus the chosen
+  // query id. Both are plain GET navigations — read-only (R5).
+  function bindFilterControls() {
+    var subprojects = document.getElementById('ez-kanban-subprojects');
+    if (subprojects && subprojects.dataset.url) {
+      subprojects.addEventListener('change', function () {
+        window.location = subprojects.dataset.url;
+      });
+    }
+
+    var querySelect = document.getElementById('ez-kanban-query-id');
+    if (querySelect && querySelect.dataset.baseUrl) {
+      querySelect.addEventListener('change', function () {
+        var query = querySelect.value;
+        window.location = querySelect.dataset.baseUrl +
+          (query ? '?query_id=' + encodeURIComponent(query) : '');
+      });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    bindFilterControls();
+
     var button = document.getElementById('ez-kanban-refresh');
     if (button) {
       button.addEventListener('click', function (event) {

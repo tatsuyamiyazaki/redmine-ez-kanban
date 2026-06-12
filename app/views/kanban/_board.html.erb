@@ -18,7 +18,8 @@
              data-column-key="<%= column.key %>">
       <header class="ez-kanban-column__header">
         <span class="ez-kanban-column__title"><%= column.name %></span>
-        <span class="ez-kanban-column__count"<%= ' title=' + l(:label_ez_kanban_wip_over).inspect if over_wip %>><%= column.wip_count %><% if column.wip_limit %> / <%= column.wip_limit %><% end %></span>
+        <%= tag.span class: 'ez-kanban-column__count',
+                     title: (l(:label_ez_kanban_wip_over) if over_wip) do %><%= column.wip_count %><% if column.wip_limit %> / <%= column.wip_limit %><% end %><% end %>
       </header>
 
       <div class="ez-kanban-column__cards">

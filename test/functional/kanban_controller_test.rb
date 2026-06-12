@@ -139,6 +139,29 @@ class KanbanControllerTest < Redmine::ControllerTest
                   'todo'
   end
 
+  # The over-WIP count carries the explanation as a real, parseable title
+  # attribute (hover text). Guards against hand-built attribute strings that
+  # HTML-escape into a malformed attribute and lose the tooltip.
+  def test_over_wip_count_has_title_tooltip
+    Role.find(1).add_permission!(:view_ez_kanban)
+    Issue.create!(
+      project: @project, tracker: Tracker.find(1), author: User.find(2),
+      status: IssueStatus.find(1), priority: IssuePriority.first,
+      subject: 'Over-cap card'
+    )
+
+    with_plugin_settings(
+      'columns' => [{ 'key' => 'todo', 'name' => 'To Do',
+                      'status_ids' => ['1'], 'wip_limit' => '0' }],
+      'highlight_wip' => '1'
+    ) do
+      get :show, params: { project_id: @project.id }
+    end
+
+    assert_select '.ez-kanban-column__count[title=?]',
+                  ::I18n.t(:label_ez_kanban_wip_over)
+  end
+
   # R10-3: highlighting is off by default, so even an over-capacity column
   # carries no highlight class.
   def test_over_wip_column_not_highlighted_by_default
@@ -336,6 +359,23 @@ class KanbanControllerTest < Redmine::ControllerTest
     get :show, params: { project_id: @project.id, subprojects: '1' }
     assert_select '#ez-kanban-subprojects[checked]'
     assert_select ".ez-kanban-card[data-issue-id=?]", leaf.id.to_s
+  end
+
+  # CSP hardening: board controls carry no inline JS handlers. The subproject
+  # toggle navigates via a data-url consumed by ez_kanban_board.js, and the
+  # saved-query selector via a data-base-url, so a strict Content-Security-
+  # Policy (no 'unsafe-inline') stays possible.
+  def test_board_controls_use_data_attributes_not_inline_handlers
+    Role.find(1).add_permission!(:view_ez_kanban)
+
+    get :show, params: { project_id: @project.id }
+
+    assert_response :success
+    assert_select '#ez-kanban-subprojects[data-url*=?]', 'subprojects=1'
+    assert_select '#ez-kanban-subprojects[onchange]', count: 0
+    assert_select 'select#ez-kanban-query-id[data-base-url=?]',
+                  "/projects/#{@project.identifier}/ez_kanban"
+    assert_select 'select#ez-kanban-query-id[onchange]', count: 0
   end
 
   # R3 (issue 0008): scope_issue_id restricts the board to a parent's
