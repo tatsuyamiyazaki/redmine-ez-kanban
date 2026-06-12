@@ -199,6 +199,45 @@ module EzKanban
       end
     end
 
+    # --- bounded fetch (issue 0011, ADR-0006) ---
+
+    # The board never materializes more than render_cap issues per request:
+    # WIP counts and the over-cap banner come from a counts query, and the
+    # per-column fetches share the render_cap budget as a row limit.
+    def test_board_instantiates_at_most_render_cap_issues
+      3.times { |i| create_issue(subject: "Bound #{i}", status: IssueStatus.find(1)) }
+
+      with_plugin_columns_and_cap(cap: 1) do
+        board = Board.new(@project)
+        instantiated = count_issue_instantiations do
+          board.columns
+          board.over_cap?
+        end
+
+        assert_operator instantiated, :<=, 1,
+                        'fetched rows must be bounded by the render cap'
+        assert board.over_cap?
+      end
+    end
+
+    # R-0007: columns draw left to right from one shared render budget, so
+    # when the leftmost column exhausts it, later columns draw nothing while
+    # their true WIP counts stay intact.
+    def test_render_budget_is_consumed_left_to_right
+      create_issue(subject: 'Left', status: IssueStatus.find(1))
+      create_issue(subject: 'Right', status: IssueStatus.find(2))
+
+      with_plugin_columns_and_cap(cap: 1) do
+        cols = Board.new(@project).columns
+
+        left  = column(cols, 'status_1')
+        right = column(cols, 'status_2')
+        assert_equal 1, left.cards.size
+        assert_equal 0, right.cards.size, 'budget was spent on the left column'
+        assert_operator right.wip_count, :>=, 1, 'true count survives truncation'
+      end
+    end
+
     # --- subproject scope (issue 0007): default off, opt-in include ---
 
     # Default off: a subproject leaf is excluded. Opt-in include: it appears.
@@ -276,6 +315,19 @@ module EzKanban
 
     def column(columns, key)
       columns.find { |c| c.key == key }
+    end
+
+    # Issue rows materialized inside the block, via AR's instantiation event.
+    def count_issue_instantiations
+      count = 0
+      subscriber = ActiveSupport::Notifications
+                   .subscribe('instantiation.active_record') do |*, payload|
+        count += payload[:record_count] if payload[:class_name] == 'Issue'
+      end
+      yield
+      count
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
     end
 
     def with_plugin_columns(columns)
